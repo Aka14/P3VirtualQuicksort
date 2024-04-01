@@ -73,4 +73,16 @@ public class Quicksort {
         long end = System.currentTimeMillis();
         long timeToSort = end - beginning;
     }
+    public int partition(byte[] arr, int lowIndex, int highIndex, short pivot) {
+        ByteBuffer bb = ByteBuffer.wrap(arr);
+        int i = lowIndex - 1;
+        for (int j = lowIndex; j < highIndex; j++) {
+            if (bb.getShort(j) < pivot) {
+                i++;
+                swap(arr, i, j);
+            }
+        }
+        swap(arr, i + 1, highIndex);
+        return i + 1;
+    }
 }
