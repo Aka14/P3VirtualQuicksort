@@ -2,85 +2,141 @@ import java.io.*;
 
 // -------------------------------------------------------------------------
 /**
- *  Write a one-sentence summary of your class here.
- *  Follow it with additional details about its purpose, what abstraction
- *  it represents, and how to use it.
+ * Write a one-sentence summary of your class here.
+ * Follow it with additional details about its purpose, what abstraction
+ * it represents, and how to use it.
  * 
- *  @author asifrahman
- *  @version Mar 31, 2024
+ * @author asifrahman
+ * @version Mar 31, 2024
  */
 public class BufferPool {
-    
+
     private RandomAccessFile file;
     private Buffer[] buffers;
     private int bufferSize;
-    
+    private int numBuffers;
+    private int currentInBP;
+
+    // ----------------------------------------------------------
+    /**
+     * Create a new BufferPool object.
+     * 
+     * @param filename
+     * @param bufSize
+     * @throws IOException
+     */
     public BufferPool(String filename, int bufSize) throws IOException {
         file = new RandomAccessFile(filename, "r");
-        byte[] some = new byte[(int)file.length()];
-        file.read(some);
         this.buffers = new Buffer[bufSize];
-        this.bufferSize = bufSize;
-        
+        this.bufferSize = 4096;
+        this.numBuffers = bufSize;
+        currentInBP = 0;
+
         // Initialize the buffer pool with buffers
-        for (int i = 0; i < bufferSize; i++) {
+        for (int i = 0; i < numBuffers; i++) {
             buffers[i] = new Buffer(bufferSize);
         }
     }
-    
-    public boolean checkLRU(int blockId) {
-        for(int i=0; i<bufferSize; i++) {
-            if(buffers[i].getBlockId() == blockId) {
-                return true;
+
+
+    // ----------------------------------------------------------
+    /**
+     * Checks if blockId is within the buffer pool currently.
+     * 
+     * @param blockId
+     *            block to be checked
+     * @return
+     *         index of block within buffer pool.
+     */
+    public int checkLRU(int blockId) {
+        for (int i = 0; i < currentInBP; i++) {
+            if (buffers[i].getBlockId() == blockId) {
+                return i;
             }
         }
-        return false;
+        return -1;
     }
 
-    // Copy "sz" bytes from position "pos" of the buffered storage to "space"
+
+    // ----------------------------------------------------------
+    /**
+     * Copy "sz" bytes from position "pos" of the buffered storage to "space"
+     * @param space
+     * @param sz
+     * @param pos
+     * @throws IOException
+     */
     public void getbytes(byte[] space, int sz, int pos) throws IOException {
-        int bufferPos = pos/bufferSize;
+        int bufferPos = pos / bufferSize;
         int startInBlock = pos % bufferSize;
-        if(checkLRU(bufferPos) == false) {
+        if (checkLRU(bufferPos) == -1) {
             file.seek(bufferPos * bufferSize);
-            int tempo = file.read(buffers[0].bf, 0, bufferSize);
-            if(tempo != bufferSize) {
+            Buffer temp = null;
+            if (currentInBP == buffers.length) {
+                temp = buffers[buffers.length - 1];
+            }
+            for (int i = 0; i < currentInBP - 1; i++) {
+                buffers[i + 1] = buffers[i];
+            }
+            if (temp != null && temp.isDirty() == true) {
+                file.seek(temp.getBlockId() * bufferSize);
+                file.write(temp.getBF(), 0, bufferSize);
+            }
+            int tempo = file.read(buffers[0].getBF(), 0, bufferSize);
+            if (tempo != bufferSize) {
                 throw new IOException("Block doesn't have enough space");
             }
-            buffers[0].blockId = bufferPos;
+            buffers[0].setBlockId(bufferPos);
         }
-        System.arraycopy(buffers[0].bf, startInBlock, space, 0, sz);
+        else {
+            for (int j = 0; j < checkLRU(bufferPos); j++) {
+                buffers[j + 1] = buffers[j];
+            }
+        }
+        currentInBP += 1;
+        System.arraycopy(buffers[0].getBF(), startInBlock, space, 0, 4);
     }
     
-    public void setbytes(byte[] space, int sz, int pos) {
-        buffers[pos].dirtyBit = true;
+
+
+    // ----------------------------------------------------------
+    /**
+     * Copy "sz" bytes from "space" to position "pos" in the buffered storage.
+     * @param space
+     * @param sz
+     * @param pos
+     * @throws IOException
+     */
+    public void setbytes(byte[] space, int sz, int pos) throws IOException {
+        int bufferPos = pos / bufferSize;
+        int startInBlock = pos % bufferSize;
+        if (checkLRU(bufferPos) == -1) {
+            file.seek(bufferPos * bufferSize);
+            Buffer temp = null;
+            if (currentInBP == buffers.length) {
+                temp = buffers[buffers.length - 1];
+            }
+            for (int i = 0; i < currentInBP - 1; i++) {
+                buffers[i + 1] = buffers[i];
+            }
+            if (temp != null && temp.isDirty() == true) {
+                file.seek(temp.getBlockId() * bufferSize);
+                file.write(temp.getBF(), 0, bufferSize);
+            }
+            int tempo = file.read(buffers[0].getBF(), 0, bufferSize);
+            if (tempo != bufferSize) {
+                throw new IOException("Block doesn't have enough space");
+            }
+            buffers[0].setBlockId(bufferPos);
+        }
+        else {
+            for (int j = 0; j < checkLRU(bufferPos); j++) {
+                buffers[j + 1] = buffers[j];
+            }
+        }
+        currentInBP += 1;
+        System.arraycopy(space, 0, buffers[0].getBF(), startInBlock, 4);
     }
-    
-    private class Buffer{
-        
-        private byte[] bf;
-        private int blockId;
-        private boolean dirtyBit;
-        
-        public Buffer(int size) {
-            bf = new byte[size*4];
-        }
-        
-        public int getBlockId() {
-            return blockId;
-        }
 
-        public void setBlockId(int blockId) {
-            this.blockId = blockId;
-        }
-
-        public boolean isDirty() {
-            return dirtyBit;
-        }
-
-        public void setDirty(boolean dirtyBit) {
-            this.dirtyBit = dirtyBit;
-        }
-    }
 
 }
