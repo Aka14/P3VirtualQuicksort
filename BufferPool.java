@@ -16,6 +16,9 @@ public class BufferPool {
     private int bufferSize;
     private int numBuffers;
     private int currentInBP;
+    private int cacheHits;
+    private int diskReads;
+    private int diskWrites;
 
     // ----------------------------------------------------------
     /**
@@ -31,6 +34,9 @@ public class BufferPool {
         this.bufferSize = 4096;
         this.numBuffers = bufSize;
         currentInBP = 0;
+        cacheHits = 0;
+        diskReads = 0;
+        diskWrites = 0;
 
         // Initialize the buffer pool with buffers
         for (int i = 0; i < numBuffers; i++) {
@@ -51,6 +57,7 @@ public class BufferPool {
     public int checkLRU(int blockId) {
         for (int i = 0; i < currentInBP; i++) {
             if (buffers[i].getBlockId() == blockId) {
+                cacheHits++;
                 return i;
             }
         }
@@ -61,6 +68,7 @@ public class BufferPool {
     // ----------------------------------------------------------
     /**
      * Copy "sz" bytes from position "pos" of the buffered storage to "space"
+     * 
      * @param space
      * @param sz
      * @param pos
@@ -95,13 +103,14 @@ public class BufferPool {
         }
         currentInBP += 1;
         System.arraycopy(buffers[0].getBF(), startInBlock, space, 0, 4);
+        diskWrites++;
     }
-    
 
 
     // ----------------------------------------------------------
     /**
      * Copy "sz" bytes from "space" to position "pos" in the buffered storage.
+     * 
      * @param space
      * @param sz
      * @param pos
@@ -136,7 +145,37 @@ public class BufferPool {
         }
         currentInBP += 1;
         System.arraycopy(space, 0, buffers[0].getBF(), startInBlock, 4);
+        diskReads++;
     }
 
+
+    /**
+     * gets number of cache hits in the buffer pool
+     * 
+     * @return cacheHits
+     */
+    public int getCacheHits() {
+        return cacheHits;
+    }
+
+
+    /**
+     * gets the number of times data is read to a buffer
+     * 
+     * @return
+     */
+    public int getDiskReads() {
+        return diskReads;
+    }
+
+
+    /**
+     * gets the number of times data is written from a buffer
+     * 
+     * @return
+     */
+    public int getDiskWrites() {
+        return diskWrites;
+    }
 
 }
