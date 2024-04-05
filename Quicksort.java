@@ -1,8 +1,11 @@
+
 /**
  * {Project Description Here}
  */
 
-
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * The class containing the main method.
@@ -35,26 +38,38 @@ public class Quicksort {
 
     /**
      * @param args
-     *      Command line parameters.  See the project spec!!!
+     *            Command line parameters. See the project spec!!!
+     * @throws IOException
+     * @throws NumberFormatException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args)
+        throws NumberFormatException,
+        IOException {
         // This is the main file for the program.
-        if(args.length != 3) {
+        if (args.length != 3) {
             System.out.println("Invalid parameters, input correct parameters.");
             return;
         }
         File file = new File(args[0]);
-        if(!file.exists()) System.out.println("File does not exist. Please input exisiting file");
-        
+        if (!file.exists())
+            System.out.println(
+                "File does not exist. Please input exisiting file");
+
         BufferPool bp = new BufferPool(args[0], Integer.parseInt(args[1]));
-        
+
         PrintWriter statFile = new PrintWriter(args[2]);
-        
-        long beginning = System.currentTimeMillis(); 
+        long beginning = System.currentTimeMillis();
         new SortFunction(args[0], bp);
         long end = System.currentTimeMillis();
         long timeToSort = end - beginning;
-        
+        int cacheHits = bp.getCacheHits();
+        int diskReads = bp.getDiskReads();
+        int diskWrites = bp.getDiskWrites();
+        statFile.println("Data file name: " + args[0]);
+        statFile.println("Cache hits: " + cacheHits);
+        statFile.println("Disk reads: " + diskReads);
+        statFile.println("Disk writes: " + diskWrites);
+        statFile.println("Time to sort: " + timeToSort);
     }
 
 }
