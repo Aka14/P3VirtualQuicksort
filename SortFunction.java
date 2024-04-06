@@ -6,50 +6,50 @@ public class SortFunction {
     
     private BufferPool buffers;
     
-    public SortFunction(String filename, BufferPool buffpool) throws IOException {
-        RandomAccessFile file = new RandomAccessFile(filename, "r");
-        byte[] some = new byte[(int)file.length()];
-        file.read(some);
+    public SortFunction(BufferPool buffpool) throws IOException {
         buffers = buffpool;
-        this.quickSort(some, 0, some.length-1);
+        this.quickSort(0, (int)(buffers.getFileLength()/4)-1);
     }
 
     
     private void swap(int indexA, int indexB) throws IOException {
         byte[] byteLeft = new byte[4];
         byte[] byteRight = new byte[4];
-        buffers.getbytes(byteLeft, 4, indexA);
-        buffers.getbytes(byteRight, 4, indexB);
-        buffers.setbytes(byteRight, 4, indexA);
-        buffers.setbytes(byteLeft, 4, indexB);
+        byte[] temp = new byte[4];
         
+        buffers.getbytes(byteLeft, indexA*4);
+        buffers.getbytes(byteRight, indexB*4);
+        temp = byteRight;
+        System.out.println("Before: "+toShort(byteLeft, indexA*4));
+        System.out.println("Before: "+toShort(byteRight, indexB*4));
+        
+        buffers.setbytes(byteRight, indexA*4);
+        byteLeft = temp;
+        buffers.setbytes(byteLeft, indexB*4);
+        System.out.println("After: ");
+        System.out.println(toShort(byteLeft, indexA*4));
+        System.out.println(toShort(byteRight, indexB*4));
+//        byte temp = arr[indexA];
+//        arr[indexA] = arr[indexB];
+//        arr[indexB] = temp;
     }
 
 
     public int partition(int lowIndex, int highIndex, short pivot) throws IOException {
-          byte[] arr = new byte[4];
-          ByteBuffer bb;
+          byte[] leftRec = new byte[4];
+          byte[] rightRec = new byte[4];
           
           while(lowIndex <= highIndex) {
-             buffers.getbytes(arr, 4, lowIndex);
-             bb = ByteBuffer.wrap(arr);
-             short recordKey = bb.getShort();
-             while(recordKey - pivot < 0) {
+             
+             //short recVal = toShort(leftRec, lowIndex);
+             //System.out.println(recVal);
+             while(toShort(leftRec, lowIndex) < pivot) {   //arr[lowIndex]
                  lowIndex+=1;
-                 buffers.getbytes(arr, 4, lowIndex);
-                 bb = ByteBuffer.wrap(arr);
-                 short newKey = bb.getShort();
-                 recordKey = newKey;
              }
-             buffers.getbytes(arr, 4, highIndex);
-             bb = ByteBuffer.wrap(arr);
-             short highKey = bb.getShort();
-             while((highIndex >= lowIndex) && (highKey - pivot >=0)) {
+             //short highVal = toShort(rightRec, highIndex);
+             while((highIndex >= lowIndex) && (toShort(rightRec, highIndex) >=pivot)) {
+                 //System.out.println("High index: "+highIndex);
                  highIndex-=1; 
-                 buffers.getbytes(arr, 4, lowIndex);
-                 bb = ByteBuffer.wrap(arr);
-                 short newKey = bb.getShort();
-                 highKey = newKey;
              }
              if(highIndex > lowIndex) swap(lowIndex, highIndex);
           }
@@ -58,16 +58,26 @@ public class SortFunction {
     }
 
 
-    public void quickSort(byte[] arr, int lowIndex, int highIndex) throws IOException {
-        int pivotIndex = (highIndex + lowIndex) / 2; //value used for quickSort comparisons
-        
+    public void quickSort(int lowIndex, int highIndex) throws IOException {
+        int pivotIndex = (highIndex+lowIndex) / 2; //value used for quickSort comparisons
+        byte[] arr = new byte[4];
         swap(pivotIndex, highIndex); //swap it to end of array
         
-        int partitionIndex = partition(lowIndex, highIndex-1, arr[highIndex]); //beginning position is array minus pivot
+//        System.out.println(toShort(arr, pivotIndex));
+        
+        int partitionIndex = partition(lowIndex, highIndex-1, toShort(arr, pivotIndex)); //beginning position is array minus pivot
         swap(partitionIndex, highIndex); //places new pivot
         
-        if((partitionIndex - highIndex) > 1) quickSort(arr, lowIndex, partitionIndex - 1); //sorts left partition
-        if((highIndex - partitionIndex) > 1) quickSort(arr, partitionIndex + 1, highIndex);
+        if((partitionIndex - highIndex) > 1) quickSort(lowIndex, partitionIndex - 1); //sorts left partition
+        if((highIndex - partitionIndex) > 1) quickSort(partitionIndex + 1, highIndex);
+    }
+    
+    private short toShort(byte[] space, int index) throws IOException {
+        ByteBuffer bb;
+        buffers.getbytes(space, index*4);
+        bb = ByteBuffer.wrap(space);
+        short recordKey = bb.getShort();
+        return recordKey;
     }
 
 }
