@@ -3,8 +3,10 @@ public class Buffer {
     private int blockId;
     private boolean dirtyBit;
 
-    public Buffer(int size) {
-        bf = new byte[size * 4];
+    public Buffer(int id) {
+        bf = new byte[4096];
+        this.blockId=id;
+        this.dirtyBit = false;
     }
     
     public byte[] getBF() {
@@ -15,10 +17,9 @@ public class Buffer {
     public int getBlockId() {
         return blockId;
     }
-
-
-    public void setBlockId(int blockId) {
-        this.blockId = blockId;
+    
+    public void setBlockId(int id) {
+        this.blockId = id;
     }
 
 
@@ -31,6 +32,12 @@ public class Buffer {
         this.dirtyBit = dB;
     }
     
-    
+//    public byte[] getRecord(int index) {
+//        byte[] rec = new byte[4];
+//        System.arraycopy(bf, index*4, rec, 0, 4);
+//        return rec;
+//        
+//    }
+
 
 }
