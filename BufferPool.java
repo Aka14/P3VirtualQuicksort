@@ -96,20 +96,7 @@ public class BufferPool {
         }
         // if buffers[0] is not what i want:
         // overwrite last buffer with the block i want
-        
-        
-        // if not in buffer pool, seek in disk file
-        
-//        moveBufferToFront(buffers.length-1);
-//        if(buffers[0].isDirty()) {
-//            file.seek(blockPos * bufferSize);
-//            file.write(buffers[0].getBF(), 0, 4096);
-//            buffers[0].setBlockId(blockPos);
-//            buffers[0].setDirty(false);
-//        }
-//        file.seek(blockPos * bufferSize);
-//        file.read(buffers[0].getBF(), 0, 4096);
-        
+  
         
         
         System.arraycopy(buffers[0].getBF(), startInBlock, space, 0, 4);
@@ -118,34 +105,7 @@ public class BufferPool {
         //TODO: kick out last buffer, check if dirty
         //upload associated block to bufferpool
         //return buffer[0].getRecord(startInBlock)
-        
-        
-//        if (checkLRU(bufferPos) == -1) {
-//            file.seek(bufferPos * bufferSize);
-//            Buffer temp = null;
-//            if (currentInBP == buffers.length) {
-//                temp = buffers[buffers.length - 1];
-//            }
-//            for (int i = 0; i < currentInBP - 1; i++) {
-//                buffers[i + 1] = buffers[i];
-//            }
-//            if (temp != null && temp.isDirty() == true) {
-//                file.seek(temp.getBlockId() * bufferSize);
-//                file.write(temp.getBF(), 0, bufferSize);
-//            }
-//            int tempo = file.read(buffers[0].getBF(), 0, bufferSize);
-//            if (tempo != bufferSize) {
-//                throw new IOException("Block doesn't have enough space");
-//            }
-//            buffers[0].setBlockId(bufferPos);
-//        }
-//        else {
-//            for (int j = 0; j < checkLRU(bufferPos); j++) {
-//                buffers[j + 1] = buffers[j];
-//            }
-//        }
-//        currentInBP += 1;
-//        System.arraycopy(buffers[0].getBF(), startInBlock, space, 0, 4);
+       
     }
     
 
@@ -178,53 +138,22 @@ public class BufferPool {
             file.read(buffers[0].getBF(), 0, bufferSize);
             buffers[0].setBlockId(blockPos);
         }
-        
-//        moveBufferToFront(buffers.length-1);
-//        if(buffers[buffers.length-1].isDirty()) {
-//            file.write(buffers[buffers.length-1].getBF(), 0, 4096);
-//        }
-//        
-//        buffers[0].setBlockId(blockPos);
-//        buffers[0].setDirty(false);
-//        
-//        file.seek(blockPos * bufferSize);
-//        file.read(buffers[0].getBF(), 0, 4096);
-        
+ 
         
         System.arraycopy(space, 0, buffers[0].getBF(), startInBlock, 4);
         buffers[0].setDirty(true);
-        //TODO: check if in bufferpool, same as above
-        //copy space into index pos of the buffer[0]
         
-        
-//        int bufferPos = pos / bufferSize;
-//        int startInBlock = pos % bufferSize;
-//        if (checkLRU(bufferPos) == -1) {
-//            file.seek(bufferPos * bufferSize);
-//            Buffer temp = null;
-//            if (currentInBP == buffers.length) {
-//                temp = buffers[buffers.length - 1];
-//            }
-//            for (int i = 0; i < currentInBP - 1; i++) {
-//                buffers[i + 1] = buffers[i];
-//            }
-//            if (temp != null && temp.isDirty() == true) {
-//                file.seek(temp.getBlockId() * bufferSize);
-//                file.write(temp.getBF(), 0, bufferSize);
-//            }
-//            int tempo = file.read(buffers[0].getBF(), 0, bufferSize);
-//            if (tempo != bufferSize) {
-//                throw new IOException("Block doesn't have enough space");
-//            }
-//            buffers[0].setBlockId(bufferPos);
-//        }
-//        else {
-//            for (int j = 0; j < checkLRU(bufferPos); j++) {
-//                buffers[j + 1] = buffers[j];
-//            }
-//        }
-//        currentInBP += 1;
-//        System.arraycopy(space, 0, buffers[0].getBF(), startInBlock, 4);
+    }
+    
+    public void flush() throws IOException {
+        for(int i=0; i<buffers.length; i++) {
+            if(buffers[i].isDirty()) {
+                file.seek(buffers[i].getBlockId()*bufferSize);
+                file.write(buffers[i].getBF(), 0, bufferSize);
+                buffers[i].setDirty(false);
+            }
+        }
+        file.close();
     }
 
 
