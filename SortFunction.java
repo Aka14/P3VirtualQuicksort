@@ -15,23 +15,13 @@ public class SortFunction {
     private void swap(int indexA, int indexB) throws IOException {
         byte[] byteLeft = new byte[4];
         byte[] byteRight = new byte[4];
-        byte[] temp = new byte[4];
         
         buffers.getbytes(byteLeft, indexA*4);
         buffers.getbytes(byteRight, indexB*4);
-        temp = byteRight;
-        System.out.println("Before: "+toShort(byteLeft, indexA*4));
-        System.out.println("Before: "+toShort(byteRight, indexB*4));
         
         buffers.setbytes(byteRight, indexA*4);
-        byteLeft = temp;
         buffers.setbytes(byteLeft, indexB*4);
-        System.out.println("After: ");
-        System.out.println(toShort(byteLeft, indexA*4));
-        System.out.println(toShort(byteRight, indexB*4));
-//        byte temp = arr[indexA];
-//        arr[indexA] = arr[indexB];
-//        arr[indexB] = temp;
+        
     }
 
 
@@ -74,7 +64,6 @@ public class SortFunction {
     
     private short toShort(byte[] space, int index) throws IOException {
         ByteBuffer bb;
-        buffers.getbytes(space, index*4);
         bb = ByteBuffer.wrap(space);
         short recordKey = bb.getShort();
         return recordKey;
