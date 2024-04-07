@@ -59,6 +59,8 @@ public class Quicksort {
 
         PrintWriter statFile = new PrintWriter(args[2]);
         SortFunction sf =new SortFunction(bp);
+
+        bp.flush();
 //        long beginning = System.currentTimeMillis();
 //        new SortFunction(args[0], bp);
 //        long end = System.currentTimeMillis();
