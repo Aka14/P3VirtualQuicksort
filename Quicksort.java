@@ -58,21 +58,21 @@ public class Quicksort {
         BufferPool bp = new BufferPool(args[0], Integer.parseInt(args[1]));
 
         PrintWriter statFile = new PrintWriter(args[2]);
-        SortFunction sf =new SortFunction(bp);
-
+        long beginning = System.currentTimeMillis();
+        SortFunction sf = new SortFunction(bp);
+        long end = System.currentTimeMillis();
+        long timeToSort = end - beginning;
+        System.out.println("Time to sort: " + timeToSort + "ms");
         bp.flush();
-//        long beginning = System.currentTimeMillis();
-//        new SortFunction(args[0], bp);
-//        long end = System.currentTimeMillis();
-//        long timeToSort = end - beginning;
         int cacheHits = bp.getCacheHits();
         int diskReads = bp.getDiskReads();
         int diskWrites = bp.getDiskWrites();
-        statFile.println("Data file name: " + args[0]);
+        statFile.println("Standard sort on " + args[0]);
         statFile.println("Cache hits: " + cacheHits);
         statFile.println("Disk reads: " + diskReads);
         statFile.println("Disk writes: " + diskWrites);
         statFile.println("Time to sort: " + timeToSort);
+        statFile.close();
     }
 
 }
