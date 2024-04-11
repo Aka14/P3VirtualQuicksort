@@ -14,7 +14,7 @@ public class BufferPool {
 
     private RandomAccessFile file;
     private Buffer[] buffers;
-    private int bufferSize;
+    private static final int BUFFER_SIZE = 4096;
     private int numbersOfBuffs;
     private int diskReads;
     private int diskWrites;
@@ -31,7 +31,6 @@ public class BufferPool {
     public BufferPool(String filename, int numBuffs) throws IOException {
         file = new RandomAccessFile(filename, "rw");
         this.buffers = new Buffer[numBuffs];
-        this.bufferSize = 4096;
         this.numbersOfBuffs = numBuffs;
 
         // Initialize the buffer pool with buffers
@@ -51,30 +50,46 @@ public class BufferPool {
 
     private boolean findLRU(int blockID) throws IOException {
         cacheHits++;
-        int i = 0;
-        for (; i < buffers.length && buffers[i] != null; i++) {
+        int index = 0;
+        int blocks = 0;
+        boolean found = false;
+        for (int i = 0; i < numbersOfBuffs; i++) {
+            if (buffers[i].getBlockId() != -1) {
+                blocks++;
+            }
             // if the block id is within the buffer pool already
             if (buffers[i].getBlockId() == blockID) {
                 // moveBufferToFront(i); //shifts buffers accordingly
                 // TODO: take out the buffer, move it to the front of the list
                 // return buffer[0].getRecord(startInBlock)
+                index = i;
+                found = true;
                 break;
             }
+
         }
-        if (i == numbersOfBuffs) {
-            i = numbersOfBuffs - 1;
-            if (buffers[i].isDirty()) {
-                file.seek(buffers[i].getBlockId() * bufferSize);
-                file.write(buffers[i].getBF(), 0, (int)file.length());
-                buffers[i].setDirty(false);
-            }
+      
+        if (!found && blocks < numbersOfBuffs) {
+            index = blocks;
         }
-        Buffer temp = buffers[i];
-        for (int j = i; j > 0; j--) {
-            buffers[j] = buffers[j - 1];
+        else if(!found) {
+            index = numbersOfBuffs - 1;
+        }
+        if (!found && index == numbersOfBuffs - 1) {
+         // index = numbersOfBuffs - 1;
+                     if (buffers[index].isDirty()) {
+                         file.seek(buffers[index].getBlockId() * BUFFER_SIZE);
+                         file.write(buffers[index].getBF());
+                         buffers[index].setDirty(false);
+                     }
+                 }
+        
+        Buffer temp = buffers[index];
+        for (int j = index; j > 0; j--) {
+            buffers[j] = buffers[j-1];
         }
         buffers[0] = temp;
-        return blockID == buffers[i].getBlockId();
+        return found;
     }
 
 
@@ -95,18 +110,21 @@ public class BufferPool {
         // Step 3: System.arraycopy()
         // --> buffer containg block our record is at should be buffers[0]
 
-        int blockPos = pos / bufferSize;
-        int startInBlock = pos % bufferSize;
+        int blockPos = pos / BUFFER_SIZE;
+        int startInBlock = pos % BUFFER_SIZE;
 
         if (!findLRU(blockPos)) {
-            file.seek(blockPos * bufferSize);
-            file.read(buffers[0].getBF(), 0, bufferSize);
+            file.seek(blockPos * BUFFER_SIZE);
+            file.read(buffers[0].getBF(), 0, BUFFER_SIZE);
             buffers[0].setBlockId(blockPos);
             diskReads++;
         }
         // if buffers[0] is not what i want:
         // overwrite last buffer with the block i want
+// System.out.println("startInBlock = " + startInBlock);
+// if (startInBlock >= 0) {
         System.arraycopy(buffers[0].getBF(), startInBlock, space, 0, 4);
+// }
 
         // TODO: kick out last buffer, check if dirty
         // upload associated block to bufferpool
@@ -136,12 +154,12 @@ public class BufferPool {
         // --> arraycopy is opposite direction of getBytes
         // Step 4: mark as dirty
 
-        int blockPos = pos / bufferSize;
-        int startInBlock = pos % bufferSize;
+        int blockPos = pos / BUFFER_SIZE;
+        int startInBlock = pos % BUFFER_SIZE;
 
         if (!findLRU(blockPos)) {
-            file.seek(blockPos * bufferSize);
-            file.read(buffers[0].getBF(), 0, bufferSize);
+            file.seek(blockPos * BUFFER_SIZE);
+            file.read(buffers[0].getBF(), 0, BUFFER_SIZE);
             buffers[0].setBlockId(blockPos);
             diskWrites++;
         }
@@ -154,8 +172,8 @@ public class BufferPool {
     public void flush() throws IOException {
         for (int i = 0; i < buffers.length; i++) {
             if (buffers[i].isDirty()) {
-                file.seek(buffers[i].getBlockId() * bufferSize);
-                file.write(buffers[i].getBF(), 0, (int)file.length());
+                file.seek(buffers[i].getBlockId() * BUFFER_SIZE);
+                file.write(buffers[i].getBF());
                 buffers[i].setDirty(false);
                 diskWrites++;
             }
