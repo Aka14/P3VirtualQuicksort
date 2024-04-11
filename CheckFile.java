@@ -31,6 +31,8 @@ public class CheckFile {
                 dis.readShort(); // reads and ignores value.
                 // or we could do: dis.skipBytes(2);
                 if (prev > curr) {
+//                    System.out.println("prev: " + prev);
+//                    System.out.println("curr: " + curr);
                     isError = true;
                 }
                 prev = curr; // gets ready for next comparison
