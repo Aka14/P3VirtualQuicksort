@@ -60,10 +60,10 @@ public class Quicksort {
         PrintWriter statFile = new PrintWriter(args[2]);
         long beginning = System.currentTimeMillis();
         SortFunction sf = new SortFunction(bp);
+        bp.flush();
         long end = System.currentTimeMillis();
         long timeToSort = end - beginning;
         System.out.println("Time to sort: " + timeToSort + "ms");
-        bp.flush();
         int cacheHits = bp.getCacheHits();
         int diskReads = bp.getDiskReads();
         int diskWrites = bp.getDiskWrites();
