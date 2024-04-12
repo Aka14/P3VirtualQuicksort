@@ -1,8 +1,23 @@
 import java.io.*;
 import java.util.*;
 
+// -------------------------------------------------------------------------
+/**
+ * FileGenerator: Generates a file of either type that then gets fed into the
+ * program to be sorted.
+ * 
+ * @author asifrahman
+ * @version Apr 12, 2024
+ */
 enum FileType {
-    BINARY, ASCII
+    /**
+     * Binary File to be generated
+     */
+    BINARY,
+    /**
+     * ASCII file to be generated
+     */
+    ASCII
 };
 
 
