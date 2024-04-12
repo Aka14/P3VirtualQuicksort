@@ -1,24 +1,64 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
+// -------------------------------------------------------------------------
+/**
+ * SortFunction: Contains quicksort functionality of program
+ * 
+ * @author asifrahman
+ * @version Apr 12, 2024
+ */
 public class SortFunction {
 
     private BufferPool buffers;
     private static int RECORD_SIZE = 4;
 
+    // ----------------------------------------------------------
+    /**
+     * Create a new SortFunction object.
+     * 
+     * @param buffpool
+     *            bufferPool that quickSort gets called on
+     * @throws IOException
+     */
     public SortFunction(BufferPool buffpool) throws IOException {
         buffers = buffpool;
         this.quickSort(0, (int)(buffers.getFileLength() / RECORD_SIZE) - 1);
     }
 
-
+    // ----------------------------------------------------------
+    /**
+     * Swap: changes the left byte array position to indexB and right byte array
+     * position to indexA
+     * 
+     * @param indexA
+     *            starting position of left arr
+     * @param indexB
+     *            starting position of right arr
+     * @param left
+     *            left record
+     * @param right
+     *            right record
+     * @throws IOException
+     */
     public void swap(int indexA, int indexB, byte[] left, byte[] right)
         throws IOException {
         buffers.setbytes(right, indexA * RECORD_SIZE);
         buffers.setbytes(left, indexB * RECORD_SIZE);
     }
 
-
+    // ----------------------------------------------------------
+    /**
+     * Executes partitioning of array using short pivot as comparison.
+     * 
+     * @param lowIndex
+     *            represents beginning of partition arr
+     * @param highIndex
+     *            represents end of partition arr
+     * @param pivot
+     *            value used for comparisons
+     * @return lowIndex where the pivot should swap to
+     * @throws IOException
+     */
     public int partition(int lowIndex, int highIndex, short pivot)
         throws IOException {
         byte[] leftRec = new byte[RECORD_SIZE];
@@ -49,6 +89,16 @@ public class SortFunction {
     }
 
 
+    // ----------------------------------------------------------
+    /**
+     * method that executes quickSort functionalities recursively
+     * 
+     * @param lowIndex
+     *            beginning of partition arr
+     * @param highIndex
+     *            end of partition arr
+     * @throws IOException
+     */
     public void quickSort(int lowIndex, int highIndex) throws IOException {
         int pivotIndex = (highIndex + lowIndex) / 2;// value used for quickSort
 
